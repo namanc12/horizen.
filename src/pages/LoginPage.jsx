@@ -12,7 +12,6 @@ const LoginPage = () => {
   const [scrollY, setScrollY] = useState(0);
   const navigate = useNavigate();
 
-  // Handle mount animation and scroll for parallax
   useEffect(() => {
     setIsAnimating(true);
     
@@ -26,18 +25,27 @@ const LoginPage = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError(""); 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/Welcome");
     } catch (error) {
       setError("Failed to log in. Please check your credentials.");
       console.error("Login error:", error);
     }
   };
 
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        navigate("/Welcome");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
   return (
     <div className="fixed inset-0 overflow-y-auto text-white">
-      {/* Parallax Background */}
       <div 
         className="absolute inset-0 bg-black/40 animate-pulse opacity-20 z-0"
         style={{
@@ -50,7 +58,6 @@ const LoginPage = () => {
         }}
       />
 
-      {/* Login Form Container */}
       <div className="min-h-screen flex items-center justify-center">
         <div 
           className={`relative z-10 bg-[#1A1A1A]/95 p-8 rounded-xl border border-[#FFB81C]/50 shadow-2xl w-full max-w-md transform transition-all duration-500 ease-out ${
@@ -99,7 +106,6 @@ const LoginPage = () => {
         </div>
       </div>
 
-      {/* Custom animations */}
       <style jsx>{`
         @keyframes fadeIn {
           from {
