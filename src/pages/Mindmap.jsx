@@ -396,26 +396,21 @@ const SolarSystemMindMap = () => {
   });
 
   let completedTasksCount = mindMapData.children.filter(child => {
-    if (currentUser.role === "employee") {
-      return child.status === "completed" && child.assignedTo.some(emp => emp.name === currentUser.name);
-    }
+    
     return child.status === "completed";
   }).length;
+  console.log(completedTasksCount)
 
   let chosenTasksCount = mindMapData.children.filter(child => {
-    if (currentUser.role === "employee") {
-      return child.status === "chosen" && child.assignedTo.some(emp => emp.name === currentUser.name);
-    }
+    
     return child.status === "chosen";
   }).length;
-
+  console.log(chosenTasksCount)
   let totalTasksCount = mindMapData.children.filter(child => {
-    if (currentUser.role === "employee") {
-      return (child.status === "chosen" || child.status === "completed") &&
-             child.assignedTo.some(emp => emp.name === currentUser.name);
-    }
+   
     return true;
   }).length;
+  console.log(totalTasksCount)
 
   const handleTextChange = (event) => {
     setUserInput(event.target.value);
@@ -497,33 +492,48 @@ const SolarSystemMindMap = () => {
     }
   };
 
-  const handleSendEmail = async (planet) => {
+  const handleSendEmail = async () => {
+    console.log("Email sending started");  // Add this to check if the function runs
     setEmailSending(true);
     try {
+      // Extract email addresses from the assignedTo array
+      const emailAddresses = selectedPlanet.assignedTo
+        .map(emp => emp.email)
+        .filter(email => email);  // Filter out any undefined emails
+      
+      console.log("Email addresses:", emailAddresses);  // Check what emails are found
+      
+      if (emailAddresses.length === 0) {
+        throw new Error("No valid email addresses found");
+      }
+      
       const templateParams = {
-        to_name: planet.assignedTo.map(emp => emp.name).join(", "),
-        to_email: planet.assignedTo.map(emp => emp.email).join(", "),
-        subject: `Task Update: ${planet.label}`,
+        to_name: selectedPlanet.assignedTo.map(emp => emp.name).join(", "),
+        to_email: emailAddresses.join(", "),
+        subject: `Task Update: ${selectedPlanet.label}`,
         message: emailContent,
-        task_name: planet.label,
-        task_description: planet.info
+        task_name: selectedPlanet.label,
+        task_description: selectedPlanet.info
       };
-
-      await emailjs.send(
+      
+      console.log("Sending with params:", templateParams);
+      
+      const response = await emailjs.send(
         EMAIL_SERVICE_ID,
         EMAIL_TEMPLATE_ID,
         templateParams,
         EMAIL_PUBLIC_KEY
       );
-
+      
+      console.log("Email sent successfully:", response);
       setEmailSending(false);
       setEmailContent("");
       setShowPromptEditor(false);
-      setDisplayedInfo(`Email successfully sent to ${planet.assignedTo.map(emp => emp.name).join(", ")}`);
+      setDisplayedInfo(`Email successfully sent to ${selectedPlanet.assignedTo.map(emp => emp.name).join(", ")}`);
     } catch (error) {
       console.error("Error sending email:", error);
       setEmailSending(false);
-      setDisplayedInfo("Error sending email. Please try again.");
+      setDisplayedInfo(`Error sending email: ${error.message}. Please try again.`);
     }
   };
 
@@ -592,11 +602,11 @@ const SolarSystemMindMap = () => {
           <div className="border-t border-green-500 pt-4">
             <div className="flex justify-between font-medium">
               <span>Completed:</span>
-              <span>{totalCompleted}</span>
+              <span>{completedTasksCount + "/" + totalTasksCount}</span>
             </div>
             <div className="flex justify-between font-medium mt-2">
               <span>Chosen:</span>
-              <span>{totalChosen}</span>
+              <span>{chosenTasksCount + "/" + totalTasksCount}</span>
             </div>
           </div>
         </motion.div>
@@ -816,11 +826,14 @@ const SolarSystemMindMap = () => {
                   </button>
                   <button
                     className="px-4 py-2 bg-yellow-500 text-black font-bold rounded hover:bg-yellow-600 transition"
-                    onClick={() => handleSendEmail(selectedPlanet)}
+                    onClick={() => {
+                      console.log("Email button clicked");  // Add this to debug
+                      handleSendEmail();  // Call without parameters
+                    }}
                     disabled={emailSending}
-                  >
+                    >
                     {emailSending ? "Sending..." : "Send Email"}
-                  </button>
+                    </button>
                 </div>
               </div>
             )}
@@ -833,7 +846,7 @@ const SolarSystemMindMap = () => {
 
             {!emailContent && !showPromptEditor && !showCalendar && !showDiscord && !showDiscordPromptEditor && (
               <div className="border border-green-400 p-6 rounded mb-8">
-                {displayedInfo}
+                {selectedPlanet.info}
               </div>
             )}
 
@@ -861,8 +874,7 @@ const SolarSystemMindMap = () => {
                       })
                     };
                     setMindmapData(updatedMindmapData);
-                    const completedTasksCount = updatedMindmapData.children.filter(child => child.status === 'completed').length;
-                    setTotalCompleted(completedTasksCount + "/" + totalTasksCount);
+                    
                     setSelectedPlanet(null);
                   }}
                 >
