@@ -1,4 +1,4 @@
-# horizen. : {Firebase Link}
+# horizen. : horizen-ec259.firebaseapp.com
 
 Horizen is an AI-powered project management tool that helps break down projects into smaller tasks, assign them to employees, and track progress—all through an intuitive, solar system-inspired UI.
 
