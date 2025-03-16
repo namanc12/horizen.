@@ -1,4 +1,3 @@
-// firebase.js
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
@@ -34,7 +33,7 @@ export const getDb = () => {
   if (!dbInstance) {
     const app = getFirebaseApp();
     try {
-      dbInstance = getFirestore(app); // Initialize Firestore
+      dbInstance = getFirestore(app); 
     } catch (error) {
       console.error("Failed to initialize Firestore:", error);
       throw error;
