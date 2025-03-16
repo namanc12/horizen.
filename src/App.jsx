@@ -60,27 +60,20 @@ const StarryBackground = React.memo(() => {
 
 StarryBackground.displayName = 'StarryBackground';
 
-const ProtectedRoute = ({ children }) => {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
+const ProtectedRoute = ({ user, isLoading, children }) => {
+  if (isLoading) {
+    return <div>Loading...</div>; 
+  }
   return user ? children : <Navigate to="/Login" />;
 };
 
-const AppRoutes = ({ user }) => (
+const AppRoutes = ({ user, isLoading }) => (
   <Routes>
-    {!user && <Route path="/Login" element={<LoginPage />} />}
+    <Route path="/Login" element={<LoginPage />} />
     <Route
       path="/Welcome"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute user={user} isLoading={isLoading}>
           <Welcome />
         </ProtectedRoute>
       }
@@ -88,7 +81,7 @@ const AppRoutes = ({ user }) => (
     <Route
       path="/Navigator"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute user={user} isLoading={isLoading}>
           <Guide />
         </ProtectedRoute>
       }
@@ -96,7 +89,7 @@ const AppRoutes = ({ user }) => (
     <Route
       path="/Mindmap"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute user={user} isLoading={isLoading}>
           <Mindmap />
         </ProtectedRoute>
       }
@@ -104,12 +97,12 @@ const AppRoutes = ({ user }) => (
     <Route
       path="/Table"
       element={
-        <ProtectedRoute>
+        <ProtectedRoute user={user} isLoading={isLoading}>
           <WebWorkPage />
         </ProtectedRoute>
       }
     />
-    <Route path="*" element={<Navigate to="/Welcome" />} />
+    <Route path="*" element={<Navigate to={user ? "/Welcome" : "/Login"} />} />
   </Routes>
 );
 
@@ -117,11 +110,13 @@ const MemoizedSidebar = React.memo(Sidebar);
 
 const App = () => {
   const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
+      setIsLoading(false);
     });
 
     return () => unsubscribe();
@@ -139,9 +134,12 @@ const App = () => {
     };
   }, []);
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="relative flex min-h-screen p-4">
-      {/* Always render StarryBackground, but hide it on the login page */}
       <StarryBackground style={{ display: location.pathname === "/Login" ? "none" : "block" }} />
       
       {user && (
@@ -151,7 +149,7 @@ const App = () => {
       )}
       
       <main className="flex-1 max-w-[1280px] mx-auto sm:pr-5" style={{ zIndex: 1 }}>
-        <AppRoutes user={user} />
+        <AppRoutes user={user} isLoading={isLoading} />
       </main>
     </div>
   );
